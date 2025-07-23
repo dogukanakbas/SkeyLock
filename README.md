@@ -1,8 +1,9 @@
 # 🛡️ SkeyLock by Udar Soft - Enterprise IoT Security Platform
 
-[![Deploy Status](https://github.com/yourusername/skeylock/workflows/Deploy%20SkeyLock%20by%20Udar%20Soft/badge.svg)](https://github.com/yourusername/skeylock/actions)
-[![Security Rating](https://img.shields.io/badge/security-A+-green.svg)](https://github.com/yourusername/skeylock)
+[![Deploy Status](https://github.com/dogukanakbas/SkeyLock/workflows/Deploy%20SkeyLock%20by%20Udar%20Soft/badge.svg)](https://github.com/dogukanakbas/SkeyLock/actions)
+[![Security Rating](https://img.shields.io/badge/security-A+-green.svg)](https://github.com/dogukanakbas/SkeyLock)
 [![License](https://img.shields.io/badge/license-Commercial-blue.svg)](LICENSE)
+[![Language Support](https://img.shields.io/badge/languages-EN%20%7C%20TR-blue.svg)](README.md)
 
 > **Production-Ready IoT Security Platform** - Comprehensive security scanning and monitoring for IoT devices with enterprise-grade features, multi-tenant architecture, and real-time threat detection.
 
@@ -10,8 +11,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/skeylock.git
-cd skeylock
+git clone https://github.com/dogukanakbas/SkeyLock.git
+cd SkeyLock
 
 # Configure environment
 cp .env.production .env
