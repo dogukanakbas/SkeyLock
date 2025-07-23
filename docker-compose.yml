@@ -1,0 +1,190 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: iot_security_prod
+      POSTGRES_USER: iot_prod_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-IoTSec2025!@#}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - iot_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot_prod_user -d iot_security_prod"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-RedisIoT2025!}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - iot_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://iot_prod_user:${POSTGRES_PASSWORD:-IoTSec2025!@#}@postgres:5432/iot_security_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-RedisIoT2025!}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-production-2025}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - iot_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker for Background Tasks
+  celery:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: celery -A app.celery worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql://iot_prod_user:${POSTGRES_PASSWORD:-IoTSec2025!@#}@postgres:5432/iot_security_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-RedisIoT2025!}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-production-2025}
+      - ENVIRONMENT=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: celery -A app.celery beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://iot_prod_user:${POSTGRES_PASSWORD:-IoTSec2025!@#}@postgres:5432/iot_security_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-RedisIoT2025!}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-production-2025}
+      - ENVIRONMENT=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+  # Frontend Dashboard
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=${API_URL:-https://api.yourdomain.com}
+      - REACT_APP_STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+  # Marketing Site
+  marketing:
+    build: 
+      context: ./marketing
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3001:80"
+    environment:
+      - NEXT_PUBLIC_API_URL=${API_URL:-https://api.yourdomain.com}
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+      - marketing
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+  # Grafana for Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - iot_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  nginx_logs:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  iot_network:
+    driver: bridge

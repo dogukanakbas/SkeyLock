@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: iot_security_staging
+      POSTGRES_USER: iot_staging_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-IoTSecStaging2025!}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - iot_staging_network
+    restart: unless-stopped
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-RedisStaging2025!}
+    volumes:
+      - redis_staging_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - iot_staging_network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY}/backend:latest
+    ports:
+      - "8003:8002"
+    environment:
+      - DATABASE_URL=postgresql://iot_staging_user:${POSTGRES_PASSWORD:-IoTSecStaging2025!}@postgres:5432/iot_security_staging
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-RedisStaging2025!}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-staging-jwt-secret-key}
+      - STRIPE_SECRET_KEY=${STRIPE_TEST_SECRET_KEY}
+      - STRIPE_PUBLIC_KEY=${STRIPE_TEST_PUBLIC_KEY}
+      - ENVIRONMENT=staging
+      - DEBUG=false
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - iot_staging_network
+    restart: unless-stopped
+
+  # Celery Worker
+  celery:
+    image: ghcr.io/${GITHUB_REPOSITORY}/backend:latest
+    command: celery -A app.celery worker --loglevel=info --concurrency=2
+    environment:
+      - DATABASE_URL=postgresql://iot_staging_user:${POSTGRES_PASSWORD:-IoTSecStaging2025!}@postgres:5432/iot_security_staging
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-RedisStaging2025!}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:-staging-jwt-secret-key}
+      - ENVIRONMENT=staging
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - iot_staging_network
+    restart: unless-stopped
+
+  # Frontend Dashboard
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY}/frontend:latest
+    ports:
+      - "3002:80"
+    environment:
+      - REACT_APP_API_URL=https://api-staging.yourdomain.com
+      - REACT_APP_STRIPE_PUBLIC_KEY=${STRIPE_TEST_PUBLIC_KEY}
+    networks:
+      - iot_staging_network
+    restart: unless-stopped
+
+  # Marketing Site
+  marketing:
+    image: ghcr.io/${GITHUB_REPOSITORY}/marketing:latest
+    ports:
+      - "3003:80"
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api-staging.yourdomain.com
+    networks:
+      - iot_staging_network
+    restart: unless-stopped
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+
+networks:
+  iot_staging_network:
+    driver: bridge

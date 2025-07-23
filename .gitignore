@@ -1,0 +1,121 @@
+# SkeyLock by Udar Soft - Production .gitignore
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+env/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# React
+/frontend/build
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Next.js
+/marketing/.next/
+/marketing/out/
+/marketing/build/
+/marketing/.env*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+/backend/iot_security.db
+
+# Logs
+*.log
+/backend/backend.log
+/frontend/frontend.log
+/marketing/marketing.log
+logs/
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# SSL Certificates (for security)
+*.pem
+*.key
+*.crt
+*.csr
+/nginx/ssl/
+
+# Backup files
+*.bak
+*.backup
+/backups/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Production secrets
+/secrets/
+*.secret
+
+# Monitoring data
+/monitoring/data/
+/prometheus/data/
+/grafana/data/
