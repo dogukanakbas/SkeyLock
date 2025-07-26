@@ -122,18 +122,18 @@ services:
       - iot_network
     restart: unless-stopped
 
-  # Marketing Site
-  marketing:
-    build: 
-      context: ./marketing
-      dockerfile: Dockerfile.prod
-    ports:
-      - "3001:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=${API_URL:-https://api.yourdomain.com}
-    networks:
-      - iot_network
-    restart: unless-stopped
+  # Marketing Site (temporarily disabled)
+  # marketing:
+  #   build: 
+  #     context: ./marketing
+  #     dockerfile: Dockerfile.prod
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=${API_URL:-https://api.yourdomain.com}
+  #   networks:
+  #     - iot_network
+  #   restart: unless-stopped
 
   # Nginx Reverse Proxy with SSL
   nginx:
@@ -148,7 +148,6 @@ services:
     depends_on:
       - backend
       - frontend
-      - marketing
     networks:
       - iot_network
     restart: unless-stopped
