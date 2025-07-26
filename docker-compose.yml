@@ -128,7 +128,7 @@ services:
       context: ./marketing
       dockerfile: Dockerfile.prod
     ports:
-      - "3001:80"
+      - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_URL=${API_URL:-https://api.yourdomain.com}
     networks:

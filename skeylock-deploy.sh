@@ -255,4 +255,4 @@ else
 fi
 
 echo ""
-print_success "SkeyLock by Udar Soft is ready! 🎉"
+print_success "SkeyLock by Ud
